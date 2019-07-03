@@ -29,14 +29,18 @@ defmodule Orwell.Application do
   end
 
   def init(_topic, _args) do
-    {:ok, [], %{}}
+    {:ok, [], %{count: 0}}
   end
 
   def handle_message(partition, message, state) do
     {:kafka_message, _offset, key, value, _ts_type, _ts, _headers} = message
+    IO.inspect([key, value], label: "KV")
+    binary = :erlang.term_to_binary({key, value})
+    File.write!("example#{state.count}.tmp", binary)
+
     msg = Parser.parse(key, value)
     IO.inspect(msg, label: "Parsed message")
-    {:ok, :ack, state}
+    {:ok, :ack, %{state | count: state.count + 1}}
   end
 
   def parse_message(_, ""), do: %{type: :tombstone}

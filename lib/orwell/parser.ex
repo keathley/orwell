@@ -57,7 +57,7 @@ defmodule Orwell.Parser do
     << _version :: size(16), g_length :: size(16), group :: binary-size(g_length), _rest :: binary() >> = key
 
     case version(value) do
-      v in [0, 1] ->
+      v when v in [0, 1] ->
         <<
           version :: size(16),
           p_size :: integer-size(16),
