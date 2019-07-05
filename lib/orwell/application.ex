@@ -20,7 +20,6 @@ defmodule Orwell.Application do
     {:ok, _} = Application.ensure_all_started(:brod)
     :ok = :brod.start_client(kafka_endpoints, :brod_client)
     result = :brod_topic_subscriber.start_link(:brod_client, topic, :all, [{:begin_offset, :earliest}], __MODULE__, [])
-    IO.inspect(result, label: "Result from starting subscriber")
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
@@ -34,13 +33,18 @@ defmodule Orwell.Application do
 
   def handle_message(partition, message, state) do
     {:kafka_message, _offset, key, value, _ts_type, _ts, _headers} = message
-    IO.inspect([key, value], label: "KV")
-    binary = :erlang.term_to_binary({key, value})
-    File.write!("example#{state.count}.tmp", binary)
-
     msg = Parser.parse(key, value)
     IO.inspect(msg, label: "Parsed message")
-    {:ok, :ack, %{state | count: state.count + 1}}
+
+    case get_in(msg, [:value]) do
+      {:error, _} ->
+        IO.inspect(value, label: "Could not parse value")
+        false
+
+      _ ->
+        true
+    end
+    {:ok, :ack, state}
   end
 
   def parse_message(_, ""), do: %{type: :tombstone}

@@ -38,4 +38,10 @@ defmodule Orwell.ParserTest do
 
     assert Parser.parse(key, value) == %{}
   end
+
+  test "parses group metadata" do
+    value = <<0, 2, 0, 8, 99, 111, 110, 115, 117, 109, 101, 114, 0, 0, 0, 30, 255, 255, 255, 255, 0, 0, 1, 104, 89, 219, 2, 156, 0, 0, 0, 0>>
+
+    assert %{} = Parser.parse_group_metadata_value(value)
+  end
 end
