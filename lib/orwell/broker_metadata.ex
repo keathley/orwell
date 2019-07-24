@@ -7,15 +7,19 @@ defmodule Orwell.BrokerMetadata do
   """
   use Supervisor
 
-  def start_link(init_arg) do
-    Supervisor.start_link(__MODULE__, init_arg, name: __MODULE__)
+  alias Orwell.BrokerMetadata.Refresher
+
+  def start_link(brokers) do
+    Supervisor.start_link(__MODULE__, brokers, name: __MODULE__)
   end
 
-  def init(_init_arg) do
+  def init(brokers) do
     :topic_offsets = :ets.new(:topic_offsets, [:set, :public, :named_table])
 
     children = [
-      # Topic,
+      {DynamicSupervisor, name: PartitionSupervisor, strategy: :one_for_one},
+      {Registry, [keys: :unique, name: PartitionRegistry]},
+      {Refresher, brokers},
     ]
 
     Supervisor.init(children, strategy: :one_for_one)
@@ -23,6 +27,10 @@ defmodule Orwell.BrokerMetadata do
 
   def set_offset(topic, partition, offset) do
     true = :ets.insert(:topic_offsets, {key(topic, partition), offset})
+  end
+
+  def watch_offset(topic, partition) do
+    DynamicSupervisor.start_child(PartitionSupervisor,)
   end
 
   @doc """

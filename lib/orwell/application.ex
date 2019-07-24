@@ -9,8 +9,7 @@ defmodule Orwell.Application do
 
   def start(_type, _args) do
     children = [
-      # Orwell.Storage,
-      # {Orwell.BrokerInformation, kafka_endpoints()},
+      {Orwell.BrokerInformation, kafka_endpoints()},
       {Orwell.OffsetConsumer, @kafka_client},
     ]
 
