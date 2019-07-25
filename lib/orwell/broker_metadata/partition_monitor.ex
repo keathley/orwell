@@ -1,11 +1,16 @@
 defmodule Orwell.BrokerMetadata.PartitionMonitor do
   use GenServer, restart: :transient
 
+  alias Orwell.BrokerMetadata
   alias Orwell.BrokerMetadata.PartitionRegistry
+
+  require Logger
 
   @offset_refresh_interval 10_000
 
-  def start_link(brokers, topic, partition) do
+  def start_link(brokers, {topic, partition}) do
+    Logger.debug("Starting offset monitor for #{topic}, #{partition}")
+
     data = %{
       brokers: brokers,
       topic: topic,

@@ -7,7 +7,12 @@ defmodule Orwell.BrokerMetadata do
   """
   use Supervisor
 
-  alias Orwell.BrokerMetadata.Refresher
+  alias Orwell.BrokerMetadata.{
+    PartitionMonitor,
+    PartitionSupervisor,
+    PartitionRegistry,
+    Refresher,
+  }
 
   def start_link(brokers) do
     Supervisor.start_link(__MODULE__, brokers, name: __MODULE__)
@@ -17,7 +22,7 @@ defmodule Orwell.BrokerMetadata do
     :topic_offsets = :ets.new(:topic_offsets, [:set, :public, :named_table])
 
     children = [
-      {DynamicSupervisor, name: PartitionSupervisor, strategy: :one_for_one},
+      {DynamicSupervisor, name: PartitionSupervisor, strategy: :one_for_one, extra_arguments: [brokers]},
       {Registry, [keys: :unique, name: PartitionRegistry]},
       {Refresher, brokers},
     ]
@@ -29,8 +34,9 @@ defmodule Orwell.BrokerMetadata do
     true = :ets.insert(:topic_offsets, {key(topic, partition), offset})
   end
 
-  def watch_offset(topic, partition) do
-    DynamicSupervisor.start_child(PartitionSupervisor,)
+  def watch_offset(topic_partition) do
+    spec = {PartitionMonitor, topic_partition}
+    DynamicSupervisor.start_child(PartitionSupervisor, spec)
   end
 
   @doc """
@@ -39,8 +45,8 @@ defmodule Orwell.BrokerMetadata do
   """
   def offset(topic, partition) when is_binary(topic) and is_integer(partition) do
     case :ets.lookup(:topic_offsets, key(topic, partition)) do
-      [] -> nil
-      [offset] -> offset
+      [{_key, offset}] -> offset
+      _ -> nil
     end
   end
 

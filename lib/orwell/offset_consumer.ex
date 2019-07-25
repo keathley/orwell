@@ -4,8 +4,8 @@ defmodule Orwell.OffsetConsumer do
   to offset and metadata storage for reporting.
   """
 
-  alias Orwell.Parser
-  alias Orwell.Parser.{
+  alias Orwell.OffsetConsumer.Parser
+  alias Orwell.OffsetConsumer.Parser.{
     Tombstone,
     GroupMetadata,
     OffsetCommit,
@@ -52,18 +52,18 @@ defmodule Orwell.OffsetConsumer do
     {:ok, []}
   end
 
-  def handle_message(_topic, partition, message, state) do
+  def handle_message(_topic, _partition, message, state) do
     {:kafka_message, _offset, key, value, _ts_type, _ts, _headers} = message
 
     case Parser.parse(key, value) do
       %Tombstone{} ->
         Logger.debug("Skipping Tombstone")
 
-      %OffsetCommit{}=oc ->
+      %OffsetCommit{} ->
         Logger.debug("Offset Commit")
-        # Storage.set_offset(oc)
+        #Storage.set_offset(oc)
 
-      %GroupMetadata{}=gm ->
+      %GroupMetadata{} ->
         Logger.debug("Group Metadata")
         # Storage.set_ownership(gm)
 

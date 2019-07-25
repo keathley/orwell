@@ -1,7 +1,7 @@
-defmodule Orwell.ParserTest do
+defmodule Orwell.OffsetConsumer.ParserTest do
   use ExUnit.Case, async: true
 
-  alias Orwell.Parser
+  alias Orwell.OffsetConsumer.Parser
 
   # TODO - Write real tests here
 

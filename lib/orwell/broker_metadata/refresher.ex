@@ -9,37 +9,56 @@ defmodule Orwell.BrokerMetadata.Refresher do
   """
   use GenServer
 
-  def start_link(brokers) do
-    GenServer.start_link(__MODULE__, brokers, name: __MODULE__)
+  alias Orwell.BrokerMetadata
+
+  require Logger
+
+  @refresh_interval 60_000
+
+  def start_link(endpoints) do
+    GenServer.start_link(__MODULE__, endpoints, name: __MODULE__)
   end
 
-  def init(brokers) do
+  def init(endpoints) do
     Process.send_after(self(), :fetch_metadata, 0)
 
-    {:ok, %{brokers: brokers}}
+    data = %{
+      endpoints: endpoints,
+      partitions: %{},
+      brokers: [],
+    }
+
+    {:ok, data}
   end
 
   def handle_info(:fetch_metadata, data) do
-    case :brod.get_metadata(data.brokers) do
+    Process.send_after(self(), :fetch_metadata, @refresh_interval)
+
+    case :brod.get_metadata(data.endpoints) do
       {:ok, metadata} ->
         data = update_metadata(data, metadata)
-        update_offsets(data)
-        Process.send_after(self(), :fetch_offsets, @offset_refresh_timeout)
+        for {topic_partition, _} <- data.partitions do
+          BrokerMetadata.watch_offset(topic_partition)
+        end
+
         {:noreply, data}
 
       {:error, error} ->
-        Logger.warn(fn -> "Could not fetch metadata for topic: #{data.topic}" end)
+        Logger.warn(fn ->
+          "Could not fetch metadata for topic: #{data.topic}: #{inspect error}"
+        end)
         {:noreply, data}
     end
   end
 
   defp update_metadata(data, metadata) do
-    brokers = get_in(metadata, [:brokers])
+    brokers = metadata.brokers
+
     partitions =
-      metadata
-      |> get_in([:topic_metadata, :partition_metadata])
-      |> Enum.map(fn meta -> {meta.partition, %{leader: meta.leader, replicas: meta.replicas, offset: nil}} end)
-      |> Enum.into(%{})
+      for t <- metadata.topic_metadata,
+          p <- t.partition_metadata,
+      do: {{t.topic, p.partition}, %{leader: p.leader, replicas: p.replicas}},
+      into: %{}
 
     %{data | brokers: brokers, partitions: partitions}
   end
