@@ -3,14 +3,11 @@ defmodule Orwell.Application do
 
   use Application
 
-  alias Orwell.Parser
-
   @kafka_client Orwell.KafkaClient
 
   def start(_type, _args) do
     children = [
-      # Orwell.Storage,
-      # {Orwell.BrokerInformation, kafka_endpoints()},
+      {Orwell.BrokerMetadata, kafka_endpoints()},
       {Orwell.OffsetConsumer, @kafka_client},
     ]
 

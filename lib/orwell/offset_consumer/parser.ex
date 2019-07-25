@@ -1,4 +1,4 @@
-defmodule Orwell.Parser do
+defmodule Orwell.OffsetConsumer.Parser do
   defmodule Member do
     defstruct ~w|
       member_id
@@ -248,7 +248,7 @@ defmodule Orwell.Parser do
       result =
         bts
         |> a(:version, int(16), :skip)
-        |> a(:topics, list_of(topic))
+        |> a(:topics, list_of(topic()))
         |> a(:user_data, bytes(), :skip)
 
       with {:ok, assignment, _rest} <- result do
