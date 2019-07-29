@@ -8,6 +8,7 @@ defmodule Orwell.Application do
   def start(_type, _args) do
     children = [
       {Orwell.BrokerMetadata, kafka_endpoints()},
+      Orwell.GroupMonitor,
       {Orwell.OffsetConsumer, @kafka_client},
     ]
 

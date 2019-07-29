@@ -16,6 +16,8 @@ defmodule Orwell.OffsetConsumer.Parser do
   end
 
   defmodule OffsetCommit do
+    import Norm
+
     defstruct ~w|
       group
       topic
@@ -23,6 +25,16 @@ defmodule Orwell.OffsetConsumer.Parser do
       offset
       timestamp
     |a
+
+    def s do
+      schema(%__MODULE__{
+        group: spec(is_binary()),
+        topic: spec(is_binary()),
+        partition: spec(is_integer() and &(&1 >= 0)),
+        offset: spec(is_integer() and &(&1 >= 0)),
+        timestamp: spec(is_integer() and &(&1 >= 0))
+      })
+    end
   end
 
   defmodule Tombstone do
