@@ -59,9 +59,9 @@ defmodule Orwell.OffsetConsumer do
       %Tombstone{} ->
         Logger.debug("Skipping Tombstone")
 
-      %OffsetCommit{} ->
+      %OffsetCommit{}=oc ->
         Logger.debug("Offset Commit")
-        #Storage.set_offset(oc)
+        Orwell.GroupMonitor.store_offset_commit(oc)
 
       %GroupMetadata{} ->
         Logger.debug("Group Metadata")

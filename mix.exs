@@ -27,6 +27,10 @@ defmodule Orwell.MixProject do
   defp deps do
     [
       {:brod, "~> 3.8"},
+      {:cbuf, "~> 0.7"},
+      {:norm, "~> 0.6.0"},
+      {:propcheck, "~> 1.1", only: [:test, :dev]},
+      {:stream_data, "~> 0.4.3", only: [:test, :dev]},
     ]
   end
 end
