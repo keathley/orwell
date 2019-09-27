@@ -8,10 +8,8 @@ defmodule Orwell.GroupMonitor.Group do
   """
   use GenServer
 
-  alias Cbuf.Map, as: Buf
   alias Orwell.BrokerMetadata
   alias Orwell.GroupMonitor.GroupRegistry
-  alias Orwell.GroupMonitor.GroupState
   alias Orwell.Window
   alias Orwell.Notification
 
@@ -43,30 +41,27 @@ defmodule Orwell.GroupMonitor.Group do
     {:reply, data.windows, data}
   end
 
-  def handle_cast({:store, offset_commit}, data) do
+  def handle_cast({:store, %{offset: offset, timestamp: ts}=oc}, data) do
     # Get the existing window for our topic+partition
-    window = Map.get(data.windows, key(offset_commit), Window.new(data.intervals))
+    window = Map.get(data.windows, key(oc), Window.new(data.intervals))
 
-    # Create a new interval with the consumer's offset, timestamp, and head offset
-    interval = %{
-      offset: offset_commit.offset,
-      timestamp: offset_commit.timestamp,
-      head: head_offset(key(offset_commit))
-    }
+    window =
+      window
+      |> Window.insert(offset, ts, head_offset(key(oc)))
 
-    new_window = Window.update(window, interval)
-    new_data = put_in(data, [:windows, key(offset_commit)], new_window)
-
+    new_data = put_in(data, [:windows, key(oc)], window)
     {:noreply, new_data}
   end
 
   def handle_info(:check_status, data) do
-    data.windows
-    |> Enum.each(fn window -> check_status(window, data.group_id) end)
+    windows =
+      data.windows
+      |> Enum.map(fn window -> check_status(window, data.group_id) end)
+      |> Enum.into(%{})
 
     schedule_check()
 
-    {:noreply, data}
+    {:noreply, %{data | windows: windows}}
   end
 
   def handle_info(_msg, data) do
@@ -74,8 +69,14 @@ defmodule Orwell.GroupMonitor.Group do
   end
 
   defp check_status({{topic, partition}, window}, group_id) do
-    status = Window.status(window, now(), head_offset(topic, partition))
-    Notification.send(group_id, topic, partition, status)
+    case Window.update_status(window, now(), head_offset(topic, partition)) do
+      {status, status, window} ->
+        {{topic, partition}, window}
+
+      {_old_status, new_status, window} ->
+        Notification.send(new_status, group_id, topic, partition)
+        {{topic, partition}, window}
+    end
   end
 
   defp via_tuple(group_id) do

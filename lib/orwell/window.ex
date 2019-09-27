@@ -14,7 +14,10 @@ defmodule Orwell.Window do
   ])
 
   def new(intervals \\ 10) do
-    %{buffer: Buffer.new(intervals)}
+    %{
+      buffer: Buffer.new(intervals),
+      status: :ok,
+    }
   end
 
   @doc """
@@ -26,10 +29,16 @@ defmodule Orwell.Window do
     update_in(window, [:buffer], &Buffer.insert(&1, interval))
   end
 
-  def update(window, %{offset: offset, timestamp: ts, head: head}) do
+  def update(window, offset, ts, head) do
     interval = {offset, ts, calculate_lag(head, offset)}
 
     update_in(window, [:buffer], &Buffer.insert(&1, interval))
+  end
+
+  def update_status(window, time_now, head) do
+    new_status = status(window, time_now, head)
+
+    {window.status, new_status, %{window | status: new_status}}
   end
 
   def status(window, time_now, head) do
