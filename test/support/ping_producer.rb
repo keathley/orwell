@@ -12,7 +12,7 @@ thread = Thread.new do
   loop do
     printf '.'
     kafka.deliver_message("ping", topic: "pings")
-    sleep 0.5
+    sleep 0.1
   end
 end
 

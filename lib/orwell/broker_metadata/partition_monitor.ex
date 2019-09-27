@@ -9,8 +9,6 @@ defmodule Orwell.BrokerMetadata.PartitionMonitor do
   @offset_refresh_interval 10_000
 
   def start_link(brokers, {topic, partition}) do
-    Logger.debug("Starting offset monitor for #{topic}, #{partition}")
-
     data = %{
       brokers: brokers,
       topic: topic,
@@ -21,6 +19,8 @@ defmodule Orwell.BrokerMetadata.PartitionMonitor do
   end
 
   def init(data) do
+    Logger.debug("Starting offset monitor for #{data.topic}, #{data.partition}")
+
     Process.send_after(self(), :fetch_offset, 0)
 
     {:ok, data}
