@@ -7,6 +7,8 @@
   "propcheck": {:hex, :propcheck, "1.1.5", "be6e904bed62b556273338ce51e4246764f0439d7367c4de78542bb43059d636", [:mix], [{:proper, "~> 1.3", [hex: :proper, repo: "hexpm", optional: false]}], "hexpm"},
   "proper": {:hex, :proper, "1.3.0", "c1acd51c51da17a2fe91d7a6fc6a0c25a6a9849d8dc77093533109d1218d8457", [:make, :mix, :rebar3], [], "hexpm"},
   "snappyer": {:hex, :snappyer, "1.2.4", "6d739c534cd2339633127a2b40279be71f149e5842c5363a4d88e66efb7c1fec", [:make, :rebar, :rebar3], [], "hexpm"},
+  "statix": {:git, "https://github.com/rodrigues/statix.git", "a7f2046960ee1703e6fdd8f99965c8e847b6b5fe", [branch: "events_checks"]},
   "stream_data": {:hex, :stream_data, "0.4.3", "62aafd870caff0849a5057a7ec270fad0eb86889f4d433b937d996de99e3db25", [:mix], [], "hexpm"},
   "supervisor3": {:hex, :supervisor3, "1.1.8", "5cf95c95342b589ec8d74689eea0646c0a3eb92820241e0c2d0ca4c104df92bc", [:make, :rebar, :rebar3], [], "hexpm"},
+  "telemetry": {:hex, :telemetry, "0.4.0", "8339bee3fa8b91cb84d14c2935f8ecf399ccd87301ad6da6b71c09553834b2ab", [:rebar3], [], "hexpm"},
 }

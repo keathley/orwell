@@ -14,7 +14,10 @@ defmodule Orwell.Window do
   ])
 
   def new(intervals \\ 10) do
-    %{buffer: Buffer.new(intervals)}
+    %{
+      buffer: Buffer.new(intervals),
+      status: :ok,
+    }
   end
 
   @doc """
@@ -26,10 +29,21 @@ defmodule Orwell.Window do
     update_in(window, [:buffer], &Buffer.insert(&1, interval))
   end
 
-  def update(window, %{offset: offset, timestamp: ts, head: head}) do
+  def update(window, offset, ts, head) do
     interval = {offset, ts, calculate_lag(head, offset)}
 
     update_in(window, [:buffer], &Buffer.insert(&1, interval))
+  end
+
+  def update_status(window, time_now, head) do
+    new_status = status(window, time_now, head)
+
+    {window.status, new_status, %{window | status: new_status}}
+  end
+
+  def current_lag(window) do
+    {_, _, lag} = Buffer.newest(window.buffer)
+    lag
   end
 
   def status(window, time_now, head) do
@@ -97,6 +111,7 @@ defmodule Orwell.Window do
     Enum.count(offsets) == 1
   end
 
+  defp calculate_lag(head, offset) when is_nil(head) or is_nil(offset), do: -1
   defp calculate_lag(head, offset) do
     max(head - offset, 0)
   end
@@ -104,6 +119,8 @@ defmodule Orwell.Window do
   defp stopped?(buffer, time_now, head) do
     {newest_offset, newest_time, _} = Buffer.newest(buffer)
     {_, oldest_time, _} = Buffer.oldest(buffer)
+
+    IO.inspect([newest_time, oldest_time, time_now], label: "Checking stopped time")
     newest_offset < head && (time_now - newest_time) > (newest_time - oldest_time)
   end
 end

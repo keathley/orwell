@@ -1,8 +1,6 @@
 defmodule Orwell.Notification do
   @moduledoc """
   This module provides an api for sending notifications to external systems.
-  It is a stateful part of the system and understands trigger recovery
-  messages.
   """
   import Norm
 
@@ -10,7 +8,7 @@ defmodule Orwell.Notification do
 
   require Logger
 
-  def send(group_id, topic, partition, status) do
+  def send(status, group_id, topic, partition) do
     status = conform!(status, Window.statuses())
 
     case status do

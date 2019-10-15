@@ -14,10 +14,12 @@ trap "SIGINT" do
   exit 130
 end
 
+puts "Starting consumer"
+
 consumer.each_message do |message|
   puts message.offset, message.key, message.value
-  producer.produce("pong", topic: "pongs")
-  producer.deliver_messages
-  sleep 0.5
+  # producer.produce("pong", topic: "pongs")
+  # producer.deliver_messages
+  sleep 0.2
 end
 

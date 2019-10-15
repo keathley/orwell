@@ -14,5 +14,5 @@ end
 
 consumer.each_message do |message|
   puts message.offset, message.key, message.value
-  sleep 2
+  # sleep 0.5
 end
