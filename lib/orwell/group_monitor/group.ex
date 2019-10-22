@@ -31,11 +31,16 @@ defmodule Orwell.GroupMonitor.Group do
     GenServer.call(group, :get_details)
   end
 
+  def store_memberships(group, members) do
+    GenServer.cast(group, {:store_members, members})
+  end
+
   def init(group_id) do
     schedule_check()
 
     data = %{
       group_id: group_id,
+      assignments: [],
       windows: %{},
       intervals: 10,
     }
@@ -58,8 +63,17 @@ defmodule Orwell.GroupMonitor.Group do
         }
       end)
 
+    assignments =
+      data.assignments
+      |> Enum.map(fn a ->
+        a
+        |> Map.take([:client_host, :client_id])
+        |> Map.put(:topics, a.assignment.topics)
+      end)
+
     details = %{
       id: data.group_id,
+      assignments: assignments,
       partitions: partitions
     }
 
@@ -91,6 +105,12 @@ defmodule Orwell.GroupMonitor.Group do
     }
 
     :telemetry.execute([:orwell, :consumer_group, :lag], measurements, metadata)
+
+    {:noreply, new_data}
+  end
+
+  def handle_cast({:store_members, members}, data) do
+    new_data = %{data | assignments: members}
 
     {:noreply, new_data}
   end

@@ -29,7 +29,7 @@ defmodule Orwell.Router do
       {:ok, details} ->
         conn
         |> put_resp_content_type("application/json")
-        |> send_resp(200, Jason.encode!(details))
+        |> send_resp(200, Jason.encode!(%{group: details}))
     end
   end
 
