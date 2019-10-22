@@ -52,4 +52,3 @@ defmodule Orwell.BrokerMetadata do
 
   defp key(topic, partition), do: {topic, partition}
 end
-

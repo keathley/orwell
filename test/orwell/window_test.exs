@@ -86,4 +86,3 @@ defmodule Orwell.WindowTest do
     end
   end
 end
-

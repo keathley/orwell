@@ -1,4 +1,7 @@
 defmodule Orwell.BrokerMetadata.PartitionMonitor do
+  @moduledoc """
+  Periodically fetches the maximum offset for a partition.
+  """
   use GenServer, restart: :transient
 
   alias Orwell.BrokerMetadata

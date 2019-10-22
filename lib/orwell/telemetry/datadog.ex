@@ -1,4 +1,7 @@
 defmodule Orwell.Telemetry.DataDog do
+  @moduledoc """
+  Provides functionality for sending telemetry and alarms to datadog
+  """
   use Statix, runtime_config: true
 
   def start do

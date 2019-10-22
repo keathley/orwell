@@ -63,8 +63,9 @@ defmodule Orwell.OffsetConsumer do
         Logger.debug("Offset Commit")
         Orwell.GroupMonitor.store_offset_commit(oc)
 
-      %GroupMetadata{} ->
+      %GroupMetadata{}=gm ->
         Logger.debug("Group Metadata")
+        # IO.inspect(gm, label: "Group Metadata")
         # Storage.set_ownership(gm)
 
       _ ->
@@ -74,4 +75,3 @@ defmodule Orwell.OffsetConsumer do
     {:ok, :ack, state}
   end
 end
-

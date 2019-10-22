@@ -1,4 +1,8 @@
 defmodule Orwell.Producer do
+  @moduledoc """
+  Producer used for testing.
+  """
+
   def start(topic) do
     :brod.start_producer(Orwell.KafkaClient, topic, [])
   end
