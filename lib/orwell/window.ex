@@ -41,9 +41,18 @@ defmodule Orwell.Window do
     {window.status, new_status, %{window | status: new_status}}
   end
 
+  def current_status(window) do
+    window.status
+  end
+
   def current_lag(window) do
     {_, _, lag} = Buffer.newest(window.buffer)
     lag
+  end
+
+  def current_offset(window) do
+    {offset, _, _} = Buffer.newest(window.buffer)
+    offset
   end
 
   def status(window, time_now, head) do

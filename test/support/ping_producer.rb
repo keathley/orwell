@@ -13,7 +13,7 @@ thread = Thread.new do
     printf '.'
     partition = rand(3)
     kafka.deliver_message("ping", topic: "pings", partition: partition)
-    sleep 0.1
+    sleep 0.3
   end
 end
 

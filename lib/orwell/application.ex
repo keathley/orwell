@@ -10,6 +10,7 @@ defmodule Orwell.Application do
       {Orwell.BrokerMetadata, Kafka.kafka_brokers()},
       Orwell.GroupMonitor,
       {Orwell.OffsetConsumer, Kafka.client_name()},
+      Plug.Cowboy.child_spec(scheme: :http, plug: Orwell.Router, options: [port: web_port()]),
     ]
 
     telemetry = telemetry_adapter()
@@ -55,5 +56,9 @@ defmodule Orwell.Application do
 
   defp notification_adapter do
     Orwell.Telemetry.DataDog
+  end
+
+  def web_port do
+    String.to_integer(System.get_env("ORWELL_WEB_PORT") || "4000")
   end
 end
