@@ -16,4 +16,3 @@ defmodule Orwell.BrokerMetadataTest do
     end)
   end
 end
-

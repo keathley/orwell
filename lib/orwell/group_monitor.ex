@@ -59,4 +59,3 @@ defmodule Orwell.GroupMonitor do
     DynamicSupervisor.start_child(GroupSup, {Group, group_id})
   end
 end
-

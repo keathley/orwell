@@ -1,5 +1,11 @@
 defmodule Orwell.OffsetConsumer.Parser do
+  @moduledoc """
+  Parses internal kafka messages into offset commit messages and groupmetadata
+  messages.
+  """
+
   defmodule Member do
+    @moduledoc false
     defstruct ~w|
       member_id
       client_id
@@ -9,6 +15,7 @@ defmodule Orwell.OffsetConsumer.Parser do
   end
 
   defmodule GroupMetadata do
+    @moduledoc false
     defstruct ~w|
       group
       members
@@ -16,6 +23,7 @@ defmodule Orwell.OffsetConsumer.Parser do
   end
 
   defmodule OffsetCommit do
+    @moduledoc false
     import Norm
 
     defstruct ~w|
@@ -38,6 +46,7 @@ defmodule Orwell.OffsetConsumer.Parser do
   end
 
   defmodule Tombstone do
+    @moduledoc false
     defstruct []
   end
 
@@ -253,7 +262,7 @@ defmodule Orwell.OffsetConsumer.Parser do
     end
   end
 
-  defp assignment() do
+  defp assignment do
     fn next ->
       << sz :: integer-size(32), bts :: bytes-size(sz), other :: binary >> = next
 
@@ -299,7 +308,7 @@ defmodule Orwell.OffsetConsumer.Parser do
     end
   end
 
-  defp bytes() do
+  defp bytes do
     fn
       << sz :: signed-integer-size(32), rest :: binary >> ->
         if sz > 0 do
@@ -314,7 +323,7 @@ defmodule Orwell.OffsetConsumer.Parser do
     end
   end
 
-  defp string() do
+  defp string do
     fn
       << str_size :: integer-size(16), str :: binary-size(str_size), rest :: binary >> ->
         {:ok, str, rest}
@@ -324,7 +333,7 @@ defmodule Orwell.OffsetConsumer.Parser do
     end
   end
 
-  defp nullable_string() do
+  defp nullable_string do
     fn
       # If the short value is -1 we just return nil and move on.
       << 255, 255, rest ::binary >> ->
@@ -348,4 +357,3 @@ defmodule Orwell.OffsetConsumer.Parser do
     end
   end
 end
-

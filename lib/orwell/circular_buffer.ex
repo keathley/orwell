@@ -1,4 +1,8 @@
 defmodule CircularBuffer do
+  @moduledoc """
+  Circular Buffer built around erlang's queue module.
+  """
+
   def new(size) when is_integer(size) and size > 0 do
     %{q: :queue.new(), max_size: size, count: 0}
   end

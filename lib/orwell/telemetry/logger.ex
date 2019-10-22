@@ -1,4 +1,7 @@
 defmodule Orwell.Telemetry.Logger do
+  @moduledoc """
+  Telemetry Logger. Hooks telemetry events and logs them to stdout.
+  """
   require Logger
 
   def handle_event([:orwell, :consumer_group, :lag], measurements, meta, _) do
@@ -19,7 +22,7 @@ defmodule Orwell.Telemetry.Logger do
     case meta.status do
       :stopped ->
         Logger.error(fn ->
-          "consumer group: #{meta.group_id} has stopped"
+          "consumer group: #{meta.group_id} has stopped on topic: #{meta.topic}, partition: #{meta.partition}"
         end)
 
       :ok ->

@@ -5,7 +5,6 @@ defmodule Orwell.Application do
 
   alias Orwell.Kafka
 
-
   def start(_type, _args) do
     children = [
       {Orwell.BrokerMetadata, Kafka.kafka_brokers()},

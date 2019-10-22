@@ -34,6 +34,7 @@ defmodule Orwell.MixProject do
 
       {:propcheck, "~> 1.1", only: [:test, :dev]},
       {:stream_data, "~> 0.4.3", only: [:test, :dev]},
+      {:credo, "~> 1.1"}
     ]
   end
 end

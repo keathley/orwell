@@ -63,4 +63,3 @@ defmodule Orwell.BrokerMetadata.Refresher do
     %{data | brokers: brokers, partitions: partitions}
   end
 end
-

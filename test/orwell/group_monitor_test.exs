@@ -4,4 +4,3 @@ defmodule Orwell.GroupMonitorTest do
   alias Orwell.GroupMonitor
 
 end
-

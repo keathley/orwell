@@ -91,4 +91,3 @@ defmodule CircularBufferTest do
     end
   end
 end
-

@@ -117,10 +117,9 @@ defmodule Orwell.GroupMonitor.Group do
 
   defp head_offset(topic, partition), do: BrokerMetadata.offset(topic, partition)
 
-  defp schedule_check() do
+  defp schedule_check do
     Process.send_after(self(), :check_status, 5_000)
   end
 
-  defp now(), do: DateTime.utc_now() |> DateTime.to_unix(:millisecond)
+  defp now, do: DateTime.utc_now() |> DateTime.to_unix(:millisecond)
 end
-
