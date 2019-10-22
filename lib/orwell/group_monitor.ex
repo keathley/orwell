@@ -23,6 +23,12 @@ defmodule Orwell.GroupMonitor do
     |> Group.store_offset_commit(offset_commit)
   end
 
+  def store_memberships(group, members) do
+    group
+    |> get_group_pid
+    |> Group.store_memberships(members)
+  end
+
   def window_for(group_id) do
     Group.get_window(group_id)
   end

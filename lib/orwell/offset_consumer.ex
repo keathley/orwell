@@ -65,8 +65,7 @@ defmodule Orwell.OffsetConsumer do
 
       %GroupMetadata{}=gm ->
         Logger.debug("Group Metadata")
-        # IO.inspect(gm, label: "Group Metadata")
-        # Storage.set_ownership(gm)
+        Orwell.GroupMonitor.store_memberships(gm.group, gm.members)
 
       _ ->
         Logger.warn("Unknown log message type")
