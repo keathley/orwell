@@ -31,6 +31,8 @@ defmodule Orwell.MixProject do
       {:norm, "~> 0.6.0"},
       {:telemetry, "~> 0.4"},
       {:statix, github: "rodrigues/statix", branch: "events_checks"},
+      {:plug_cowboy, "~> 2.1"},
+      {:jason, "~> 1.1"},
 
       {:propcheck, "~> 1.1", only: [:test, :dev]},
       {:stream_data, "~> 0.4.3", only: [:test, :dev]},

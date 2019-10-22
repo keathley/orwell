@@ -27,6 +27,10 @@ defmodule Orwell.GroupMonitor.Group do
     GenServer.call(via_tuple(group), :get_window)
   end
 
+  def details(group) do
+    GenServer.call(group, :get_details)
+  end
+
   def init(group_id) do
     schedule_check()
 
@@ -37,6 +41,29 @@ defmodule Orwell.GroupMonitor.Group do
     }
 
     {:ok, data}
+  end
+
+  def handle_call(:get_details, _from, data) do
+    partitions =
+      data.windows
+      |> Enum.map(fn {{topic, partition}, window} ->
+        offset = Window.current_offset(window)
+
+        %{
+          topic: topic,
+          partition: partition,
+          offset: offset,
+          lag: head_offset(topic, partition) - offset,
+          status: Window.current_status(window)
+        }
+      end)
+
+    details = %{
+      id: data.group_id,
+      partitions: partitions
+    }
+
+    {:reply, details, data}
   end
 
   def handle_call(:get_window, _from, data) do
