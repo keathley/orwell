@@ -120,7 +120,6 @@ defmodule Orwell.Window do
     {newest_offset, newest_time, _} = Buffer.newest(buffer)
     {_, oldest_time, _} = Buffer.oldest(buffer)
 
-    IO.inspect([newest_time, oldest_time, time_now], label: "Checking stopped time")
     newest_offset < head && (time_now - newest_time) > (newest_time - oldest_time)
   end
 end

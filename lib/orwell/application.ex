@@ -3,13 +3,14 @@ defmodule Orwell.Application do
 
   use Application
 
-  @kafka_client Orwell.KafkaClient
+  alias Orwell.Kafka
+
 
   def start(_type, _args) do
     children = [
-      {Orwell.BrokerMetadata, kafka_endpoints()},
+      {Orwell.BrokerMetadata, Kafka.kafka_brokers()},
       Orwell.GroupMonitor,
-      {Orwell.OffsetConsumer, @kafka_client},
+      {Orwell.OffsetConsumer, Kafka.client_name()},
     ]
 
     telemetry = telemetry_adapter()
@@ -19,7 +20,7 @@ defmodule Orwell.Application do
     telemetry.configure()
     telemetry.start()
 
-    :ok = :brod.start_client(kafka_endpoints(), @kafka_client)
+    :ok = :brod.start_client(Kafka.kafka_brokers(), Kafka.client_name())
 
     :ok = :telemetry.attach(
       "orwell-consumer-telemetry",
@@ -47,10 +48,6 @@ defmodule Orwell.Application do
 
     opts = [strategy: :one_for_one, name: Orwell.Supervisor]
     Supervisor.start_link(children, opts)
-  end
-
-  defp kafka_endpoints do
-    [{'localhost', 9092}]
   end
 
   defp telemetry_adapter do
