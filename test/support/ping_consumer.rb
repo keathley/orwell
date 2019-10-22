@@ -17,9 +17,10 @@ end
 puts "Starting consumer"
 
 consumer.each_message do |message|
-  puts message.offset, message.key, message.value
-  # producer.produce("pong", topic: "pongs")
-  # producer.deliver_messages
+  puts message.topic, message.partition, message.offset, message.value
+  partition = rand(3)
+  producer.produce("pong", topic: "pongs", partition: partition)
+  producer.deliver_messages
   sleep 0.2
 end
 

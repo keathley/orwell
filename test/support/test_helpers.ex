@@ -1,4 +1,8 @@
 defmodule Orwell.TestHelpers do
+  @moduledoc """
+  Common test functions
+  """
+
   def eventually(f, retries \\ 0) do
     if retries > 10 do
       false

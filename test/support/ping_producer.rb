@@ -11,7 +11,8 @@ thread = Thread.new do
   puts "Producing =>"
   loop do
     printf '.'
-    kafka.deliver_message("ping", topic: "pings")
+    partition = rand(3)
+    kafka.deliver_message("ping", topic: "pings", partition: partition)
     sleep 0.1
   end
 end
