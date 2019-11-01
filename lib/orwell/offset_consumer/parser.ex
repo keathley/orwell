@@ -151,11 +151,17 @@ defmodule Orwell.OffsetConsumer.Parser do
 
       {1, rest} ->
         rest
+        |> IO.inspect(label: "inspecting the right thing")
         |> a(:protocol_type, string())
+        |> IO.inspect(label: "inspecting the right thing")
         |> a(:generation, int(32))
+        |> IO.inspect(label: "got the generation")
         |> a(:protocol, nullable_string())
+        |> IO.inspect(label: "got the protocol")
         |> a(:leader, nullable_string())
+        |> IO.inspect(label: "got the leader")
         |> a(:members, list_of(parse_member_metadata(1)))
+        |> IO.inspect(label: "got the members")
         |> collect()
 
       {2, rest} ->
