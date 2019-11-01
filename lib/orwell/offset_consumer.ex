@@ -55,20 +55,28 @@ defmodule Orwell.OffsetConsumer do
   def handle_message(_topic, _partition, message, state) do
     {:kafka_message, _offset, key, value, _ts_type, _ts, _headers} = message
 
-    case Parser.parse(key, value) do
-      %Tombstone{} ->
-        Logger.debug("Skipping Tombstone")
+    with {:ok, msg} <- Parser.parse(key, value) do
+      case msg do
+        %Tombstone{} ->
+          Logger.debug("Skipping Tombstone")
 
-      %OffsetCommit{}=oc ->
-        Logger.debug("Offset Commit")
-        Orwell.GroupMonitor.store_offset_commit(oc)
+        %OffsetCommit{}=oc ->
+          Logger.debug("Offset Commit")
+          Orwell.GroupMonitor.store_offset_commit(oc)
 
-      %GroupMetadata{}=gm ->
-        Logger.debug("Group Metadata")
-        Orwell.GroupMonitor.store_memberships(gm.group, gm.members)
+        %GroupMetadata{}=gm ->
+          Logger.debug("Group Metadata")
+          Orwell.GroupMonitor.store_memberships(gm.group, gm.members)
 
-      _ ->
-        Logger.warn("Unknown log message type")
+        _ ->
+          Logger.error("Unknown log message type")
+      end
+    else
+      {:error, error, rest} ->
+        Logger.error(fn -> "Error decoding: #{error}, #{rest}" end)
+
+      error ->
+        Logger.error("Unhandled error in decoder: #{inspect error}")
     end
 
     {:ok, :ack, state}

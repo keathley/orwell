@@ -26,7 +26,7 @@ defmodule Orwell.Telemetry.Logger do
         end)
 
       :ok ->
-        Logger.info(fn ->
+        Logger.warn(fn ->
           "consumer group: #{meta.group_id} has recovered"
         end)
 

@@ -50,7 +50,7 @@ defmodule Orwell.OffsetConsumer.Parser do
     defstruct []
   end
 
-  def parse(_, ""), do: %Tombstone{}
+  def parse(_, ""), do: {:ok, %Tombstone{}}
   def parse(key, value) do
     case version(key) do
       {v, rest} when v in [0, 1] ->
@@ -62,30 +62,30 @@ defmodule Orwell.OffsetConsumer.Parser do
   end
 
   defp build_offset_msg(rest, value) do
-    key = parse_offset_commit_key(rest)
-    value = parse_offset_commit_value(value)
+    with {:ok, key, _rest} <- parse_offset_commit_key(rest),
+         {:ok, value, _rest} <- parse_offset_commit_value(value) do
+      oc =
+        %OffsetCommit{
+          group: key.group,
+          topic: key.topic,
+          partition: key.partition,
+          offset: value.offset,
+          timestamp: value.commit_timestamp,
+        }
 
-    %OffsetCommit{
-      group: key.group,
-      topic: key.topic,
-      partition: key.partition,
-      offset: value.offset,
-      timestamp: value.commit_timestamp,
-    }
+      {:ok, oc}
+    end
   end
 
   defp build_group_metadata_msg(rest, value) do
-    key = parse_group_metadata_key(rest)
-    value = parse_group_metadata_value(value)
+    with {:ok, key, _rest} <- parse_group_metadata_key(rest),
+         {:ok, value} <- parse_group_metadata_value(value) do
+      members =
+        value.members
+        |> Enum.map(fn mem -> struct(Member, mem) end)
 
-    members =
-      value.members
-      |> Enum.map(fn mem -> struct(Member, mem) end)
-
-    %GroupMetadata{
-      group: key.group,
-      members: members
-    }
+      {:ok, %GroupMetadata{group: key.group, members: members}}
+    end
   end
 
   defp version(<< version :: integer-big-size(16), rest :: binary() >>), do: {version, rest}
@@ -135,18 +135,38 @@ defmodule Orwell.OffsetConsumer.Parser do
         |> a(:metadata, string())
         |> a(:commit_timestamp, int(64))
         |> collect()
+
+      {v, rest} ->
+        {:error, "unsupported offset commit version: #{v}", rest}
     end
   end
 
   def parse_group_metadata_value(value) do
-    case version(value) do
+    with {version, rest} <- version(value),
+         {:ok, header, rest} <- parse_group_metadata_header(version, rest) do
+      if header.protocol_type == "consumer" do
+        case parse_group_metadata_members(version, rest) do
+          {:ok, %{members: members}, _rest} ->
+            metadata = Map.put(header, :members, members)
+            {:ok, metadata}
+
+          e ->
+            e
+        end
+      else
+          {:error, "skipping '#{header.protocol_type}' protocol type", rest}
+      end
+    end
+  end
+
+  defp parse_group_metadata_header(version, rest) do
+    case {version, rest} do
       {0, rest} ->
         rest
         |> a(:protocol_type, string())
         |> a(:generation, int(32))
         |> a(:protocol, nullable_string())
         |> a(:leader, nullable_string())
-        |> a(:members, list_of(parse_member_metadata(0)))
         |> collect()
 
       {1, rest} ->
@@ -155,7 +175,6 @@ defmodule Orwell.OffsetConsumer.Parser do
         |> a(:generation, int(32))
         |> a(:protocol, nullable_string())
         |> a(:leader, nullable_string())
-        |> a(:members, list_of(parse_member_metadata(1)))
         |> collect()
 
       {2, rest} ->
@@ -165,7 +184,6 @@ defmodule Orwell.OffsetConsumer.Parser do
         |> a(:protocol, nullable_string())
         |> a(:leader, nullable_string())
         |> a(:current_state_timestamp, int(64))
-        |> a(:members, list_of(parse_member_metadata(2)))
         |> collect()
 
       {3, rest} ->
@@ -175,9 +193,17 @@ defmodule Orwell.OffsetConsumer.Parser do
         |> a(:protocol, nullable_string())
         |> a(:leader, nullable_string())
         |> a(:current_state_timestamp, int(64))
-        |> a(:members, list_of(parse_member_metadata(3)))
         |> collect()
+
+      {v, rest} ->
+        {:error, "unsupported group metadata version: #{v}", rest}
     end
+  end
+
+  defp parse_group_metadata_members(version, rest) do
+    rest
+    |> a(:members, list_of(parse_member_metadata(version)))
+    |> collect()
   end
 
   defp parse_member_metadata(version) do
@@ -222,13 +248,16 @@ defmodule Orwell.OffsetConsumer.Parser do
           |> a(:session_timeout, int(32), :skip)
           |> a(:subscription, bytes(), :skip)
           |> a(:assignment, assignment())
+
+      {v, rest} ->
+        {:error, "unsupported member metadata version: #{v}", rest}
       end
     end
   end
 
   defp a(next, key, parser, skip_or_keep \\ :keep)
   defp a(next, key, parser, opt) when is_binary(next), do: a({:ok, %{}, next}, key, parser, opt)
-  defp a({:error, e}, _key, _parser, _opt), do: {:error, e}
+  defp a({:error, e, rest}, _key, _parser, _opt), do: {:error, e, rest}
   defp a({:ok, built, next}, key, parser, skip_or_keep) do
     with {:ok, val, rest} <- parser.(next) do
       case skip_or_keep do
@@ -241,8 +270,8 @@ defmodule Orwell.OffsetConsumer.Parser do
     end
   end
 
-  defp collect({:error, e}), do: {:error, e}
-  defp collect({:ok, result, _}), do: result
+  defp collect({:error, e, rest}), do: {:error, e, rest}
+  defp collect({:ok, result, rest}), do: {:ok, result, rest}
 
   defp list_of(parser) do
     fn << length :: integer-size(32), next :: binary >> ->
@@ -254,8 +283,8 @@ defmodule Orwell.OffsetConsumer.Parser do
   defp parse_list(0, rest, acc, _), do: {:ok, acc, rest}
   defp parse_list(i, rest, parsed, parser) do
     case parser.(rest) do
-      {:error, e} ->
-        {:error, e}
+      {:error, e, rest} ->
+        {:error, e, rest}
 
       {:ok, val, rest} ->
         parse_list(i-1, rest, parsed ++ [val], parser)
@@ -319,7 +348,7 @@ defmodule Orwell.OffsetConsumer.Parser do
         end
 
       rest ->
-        {:error, "Bytes: #{rest}"}
+        {:error, "could not decode bytes", rest}
     end
   end
 
@@ -329,7 +358,7 @@ defmodule Orwell.OffsetConsumer.Parser do
         {:ok, str, rest}
 
       rest ->
-        {:error, rest}
+        {:error, "could not decode string", rest}
     end
   end
 
@@ -343,7 +372,7 @@ defmodule Orwell.OffsetConsumer.Parser do
         {:ok, str, rest}
 
       rest ->
-        {:error, "Nullable string: #{rest}"}
+        {:error, "could not decode nullable string", rest}
     end
   end
 
@@ -353,7 +382,7 @@ defmodule Orwell.OffsetConsumer.Parser do
         {:ok, i, rest}
 
       rest ->
-        {:error, "Could not parse as integer: #{rest}"}
+        {:error, "Could not parse as integer", rest}
     end
   end
 end
